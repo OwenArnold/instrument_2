@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for HTML5 for Apple macOS version 5.6.0">
+  <meta charset="iso-8859-1">
+  <meta name="viewport" content=
+  "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Instrument 2.0</title>
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/reveal.css">
+  <link rel="stylesheet" href="css/theme/white.css">
+  <!-- Theme used for syntax highlighting of code -->
+  <link rel="stylesheet" href="lib/css/monokai.css">
+  <!-- Printing and PDF exports -->
+
+  <script>
+                        var link = document.createElement( 'link' );
+                        link.rel = 'stylesheet';
+                        link.type = 'text/css';
+                        link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+                        document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+      <section>
+        <h2>Instrument 2.0</h2>
+        <h3>a.k.a Beamline</h3>
+      </section>
+      <section>
+        <h2>Why do we need geometry?</h2>
+        <p>Just a few applications...</p>
+        <ul style="color:#0099ff">
+          <li>Unit conversion</li>
+          <li>Absorption correction</li>
+          <li>Solid angle correction</li>
+          <li>Step scanning</li>
+          <li>Visualisation</li>
+        </ul>
+        <p>Mantid provides in-memory virtual geometry. This gives
+        runtime-control!</p>
+      </section>
+      <section>
+        <h2>Brief Timeline</h2>
+        <ol>
+          <li><b>2007</b> Instrument 1.0</li>
+          <li><b>2015</b> Performance report + ORNL 5-year
+          plan<sup>1</sup></li>
+          <li><b>2016</b> Prototype(s)</li>
+          <li><b>2017</b> COW Flat Tree Approach</li>
+          <li><b>2018</b> Widespread Mantid Application</li>
+        </ol>
+        <blockquote>
+          Using Instrument 2.0 gives 100x read performance and 10x read
+          performance over Instruemnt 1.0!
+        </blockquote>
+        <p style="font-size:20px"><sup>1</sup> <a href=
+        "https://github.com/mantidproject/documents/blob/master/Design/ORNL_Mantid_5yearplan.pdf">
+        https://github.com/mantidproject/documents/blob/master/Design/ORNL_Mantid_5yearplan.pdf</a></p>
+      </section>
+      <section>
+        <h2>Common Principles in Classes</h2>
+        <ol style="color:#0099ff">
+          <li><u>Optimise for Read access</u></li>
+          <li>Copies are first-class</li>
+          <li>Indexing for programmatic access</li>
+          <li>Iterator support</li>
+          <li>Virtualisation avoided</li>
+        </ol>
+      </section>
+      <section>
+        <h2>What is it</h2>
+        <p>Comprises three main classes...</p>
+        <p class="fragment highlight-blue">SpectrumInfo</p>
+        <p class="fragment highlight-blue">DetectorInfo</p>
+        <p class="fragment highlight-blue">ComponentInfo</p>
+      </section>
+      <section>
+        <h2>SpectrumInfo</h2>
+        <blockquote>
+          Enumerable type supporting access to spectrum level
+          properties, and accounting for detector groupings in internal
+          operations. Comprises zero or more detectors.
+        </blockquote>
+      </section>
+      <section>
+        <h2>SpectrumInfo</h2>
+        <p>Access spectra level properties</p>
+        <pre>
+                                        <code data-trim="" class=
+"hljs python" data-noescape="" data-line-numbers="">
+                                        ws = CreateSampleWorkspace()
+                                        spec_info = ws.spectrumInfo()
+                                        spec_info.l2(0)
+                                        </code>
+                                        </pre>
+      </section>
+      <section>
+        <h2>SpectrumInfo Iteration</h2>
+        <pre>
+                                        <code data-trim="" class=
+"hljs python" data-noescape="" data-line-numbers="">
+                                        ws = CreateSampleWorkspace()
+                                        spec_info = ws.spectrumInfo()
+                                        for spec in spec_info:
+                                            if spec.isMonitor:
+                                                spec.setMasked
+                                        </code>
+                                        </pre>
+      </section>
+      <section>
+        <h2>DetectorInfo</h2>
+        <blockquote>
+          Enumerable type supporting access to detector level
+          properties and geometric operators
+        </blockquote>
+      </section>
+      <section>
+        <h2>DetectorInfo</h2>
+        <pre>
+                                        <code data-trim="" class=
+"hljs python" data-noescape="" data-line-numbers="">
+                                        detinfo = ws.detectorInfo()
+                                        detinfo.twoTheta(0)
+                                        </code>
+                                        </pre>
+      </section>
+      <section>
+        <h2>DetectorInfo Iteration</h2>
+        <pre>
+                                        <code data-trim="" class=
+"hljs python" data-noescape="" data-line-numbers="">
+                                        ws = CreateSampleWorkspace()
+                                        det_info = ws.detectorInfo()
+                                        for det in det_info:
+                                            if det.isMonitor:
+                                                det.setMasked
+                                        </code>
+                                        </pre>
+      </section>
+      <section>
+        <h2>ComponentInfo</h2>
+        <blockquote>
+          Flat tree representation of the instrument
+        </blockquote>
+      </section>
+      <section>
+        <h2>ComponentInfo - Operations</h2>
+        <pre>
+                                        <code data-trim="" class=
+"hljs python" data-noescape="" data-line-numbers="">
+                                        ws = CreateSampleWorkspace()
+                                        comp_info = ws.componentInfo()
+                                        bank_index = comp_info.indexOfAny(&#39;bank1&#39;)
+                                        print(bank_index)
+                                        # 210
+                                        print(len(comp_info.componentsInSubtree(bank_index)))
+                                        # 111
+                                        print(len(comp_info.detectorsInSubtree(bank_index)))
+                                        # 100
+                                        print(comp_info.parent(bank_index))
+                                        # 225
+                                        print(comp_info.parent(comp_info.root()))
+                                        # 225
+                                        </code>
+                                        </pre>
+      </section>
+      <section>
+        <h2>ComponentInfo - Index Ranges</h2>
+        <p>Essential points...</p>
+        <ol style="color:#0099ff">
+          <li>Every detector index is a valid component index</li>
+          <li>The component index for a detector is EQUAL to the
+          detector index</li>
+          <li>Detector index ranges goes from 0 - N</li>
+          <li>Root always has highest index</li>
+        </ol>
+      </section>
+      <section>
+        <h2>ComponentInfo - Index Ranges Example</h2>
+        <pre>
+                                        <code data-trim="" class=
+"hljs python" data-noescape="" data-line-numbers="">
+                                        ws = CreateSampleWorkspace()
+                                        comp_info = ws.componentInfo()
+                                        det_info = ws.detectorInfo()
+                                        print(comp_info.root())
+                                        # 225
+                                        print(len(comp_info))
+                                        # 256
+                                        print(len(det_info))
+                                        # 220
+                                        print(comp_info.isDetector(len(det_info)-1))
+                                        # True : detector range
+                                        print(comp_info.isDetector(len(det_info)-1))
+                                        # True : detector range
+                                        print(comp_info.isDetector(len(det_info)))
+                                        # False : - non-detector component ranges
+                                        </code>
+                                        </pre>
+      </section>
+      <section>
+        <h2>Guideline: 1</h2>
+        <blockquote>
+          Treat getInstrument() on a MatrixWorkspace as deprecated
+        </blockquote>
+        <pre>
+                                        <code data-trim="" class=
+"hljs python" data-noescape="" data-line-numbers="">
+                                        ws.getInstrument() # Old API
+                                        </code>
+                                </pre>
+      </section>
+      <section>
+        <h2>Guideline: 2</h2>
+        <blockquote>
+          One should NEVER expose a Component Index or Detector Index
+          through a user facing interface, such an algorithm or fit
+          function
+        </blockquote>
+      </section>
+      <section>
+        <h2>Guideline: 3</h2>
+        <blockquote>
+          Programatically use indexes, convert IDs to indexes early if
+          necessary
+        </blockquote>
+      </section>
+      <section>
+        <h2>Further Information</h2><a href=
+        "https://docs.mantidproject.org/nightly/concepts/InstrumentAccessLayers.html"
+        style=
+        "font-size:30px">https://docs.mantidproject.org/nightly/concepts/InstrumentAccessLayers.html</a>
+      </section>
+    </div>
+  </div>
+  <script src="js/reveal.js"></script> 
+  <script>
+
+                        // More info about config & dependencies:
+                        // - https://github.com/hakimel/reveal.js#configuration
+                        // - https://github.com/hakimel/reveal.js#dependencies
+                        Reveal.initialize({
+                                hash: true,
+                                dependencies: [
+                                        { src: 'plugin/markdown/marked.js' },
+                                        { src: 'plugin/markdown/markdown.js' },
+                                        { src: 'plugin/highlight/highlight.js' },
+                                        { src: 'plugin/notes/notes.js', async: true }
+                                ]
+                        });
+  </script>
+</body>
+</html>
